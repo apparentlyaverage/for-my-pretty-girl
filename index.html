@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>For My Pretty Girl</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    :root {
+      --cream:       #fdf6ee;
+      --parchment:   #f5e9d9;
+      --blush:       #e8c4b8;
+      --rose:        #c97d6e;
+      --deep-rose:   #a45a4e;
+      --warm-brown:  #6b3f2a;
+      --text-dark:   #3a2218;
+      --text-mid:    #7a4f3a;
+      --text-light:  #b08070;
+      --card-bg:     rgba(253, 246, 238, 0.82);
+      --shadow:      rgba(100, 40, 20, 0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--cream);
+      color: var(--text-dark);
+      font-family: 'Lora', Georgia, serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ── Petal canvas ── */
+    #petal-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Grain overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.45;
+    }
+
+    /* ── Warm radial glow ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(232,196,184,0.35) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 80% 90%, rgba(201,125,110,0.18) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .page-wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 60px 24px 100px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      margin-bottom: 64px;
+      opacity: 0;
+      transform: translateY(28px);
+      animation: fadeUp 1s ease 0.2s forwards;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--text-light);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(2.8rem, 8vw, 4.4rem);
+      line-height: 1.1;
+      color: var(--deep-rose);
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--rose);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      justify-content: center;
+      margin: 0 auto 28px;
+      max-width: 320px;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--blush), transparent);
+    }
+
+    .divider-icon {
+      font-size: 1.1rem;
+      color: var(--rose);
+    }
+
+    .hero-intro {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--text-mid);
+      max-width: 500px;
+      margin: 0 auto;
+      font-style: italic;
+    }
+
+    /* ── Section headers ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 52px 0 28px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.7s ease forwards;
+    }
+
+    .section-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem;
+      font-weight: 300;
+      color: var(--blush);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .section-info h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 500;
+      font-size: 1.45rem;
+      color: var(--deep-rose);
+      margin-bottom: 3px;
+    }
+
+    .section-info p {
+      font-size: 0.82rem;
+      color: var(--text-light);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── Question cards ── */
+    .question-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(232, 196, 184, 0.55);
+      border-radius: 16px;
+      padding: 28px 30px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 24px var(--shadow), 0 1px 3px rgba(180,100,80,0.06);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp 0.65s ease forwards;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .question-card:hover {
+      box-shadow: 0 8px 36px rgba(100,40,20,0.14), 0 2px 6px rgba(180,100,80,0.08);
+      transform: translateY(-2px);
+    }
+
+    .question-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.18rem;
+      line-height: 1.6;
+      color: var(--text-dark);
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .question-card input[type="text"],
+    .question-card textarea {
+      width: 100%;
+      background: rgba(245, 233, 217, 0.5);
+      border: 1px solid rgba(201, 125, 110, 0.3);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: 'Lora', serif;
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+      resize: vertical;
+    }
+
+    .question-card input[type="text"]:focus,
+    .question-card textarea:focus {
+      border-color: var(--rose);
+      background: rgba(253, 246, 238, 0.9);
+      box-shadow: 0 0 0 3px rgba(201, 125, 110, 0.15);
+    }
+
+    .question-card input[type="text"]::placeholder,
+    .question-card textarea::placeholder {
+      color: var(--text-light);
+      font-style: italic;
+    }
+
+    textarea { min-height: 100px; }
+
+    /* ── Submit area ── */
+    .submit-area {
+      text-align: center;
+      margin-top: 52px;
+      opacity: 0;
+      animation: fadeUp 0.7s ease 1.8s forwards;
+    }
+
+    .submit-note {
+      font-size: 0.88rem;
+      color: var(--text-light);
+      font-style: italic;
+      margin-bottom: 24px;
+      letter-spacing: 0.03em;
+    }
+
+    .submit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--rose) 0%, var(--deep-rose) 100%);
+      color: var(--cream);
+      border: none;
+      border-radius: 50px;
+      padding: 16px 44px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      box-shadow: 0 6px 28px rgba(164, 90, 78, 0.38);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 10px 36px rgba(164, 90, 78, 0.48);
+    }
+
+    .submit-btn:active { transform: scale(0.98); }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-icon { font-size: 1rem; }
+
+    /* ── Success state ── */
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 80px 24px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards;
+    }
+
+    .success-screen.visible { display: block; }
+
+    .success-icon {
+      font-size: 3.5rem;
+      margin-bottom: 24px;
+      display: block;
+    }
+
+    .success-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.8rem;
+      font-weight: 300;
+      color: var(--deep-rose);
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+
+    .success-msg {
+      font-size: 1.05rem;
+      color: var(--text-mid);
+      line-height: 1.8;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* ── Error msg ── */
+    .error-msg {
+      color: var(--deep-rose);
+      font-size: 0.88rem;
+      margin-top: 12px;
+      font-style: italic;
+      display: none;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding-top: 60px;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--text-light);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Stagger cards */
+    .question-card:nth-child(1)  { animation-delay: 0.3s; }
+    .question-card:nth-child(2)  { animation-delay: 0.45s; }
+    .question-card:nth-child(3)  { animation-delay: 0.6s; }
+    .question-card:nth-child(4)  { animation-delay: 0.75s; }
+    .question-card:nth-child(5)  { animation-delay: 0.9s; }
+    .question-card:nth-child(6)  { animation-delay: 1.05s; }
+    .question-card:nth-child(7)  { animation-delay: 1.2s; }
+    .question-card:nth-child(8)  { animation-delay: 1.35s; }
+    .question-card:nth-child(9)  { animation-delay: 1.5s; }
+    .question-card:nth-child(10) { animation-delay: 1.65s; }
+    .question-card:nth-child(11) { animation-delay: 1.8s; }
+
+    .section-header:nth-of-type(1) { animation-delay: 0.25s; }
+    .section-header:nth-of-type(2) { animation-delay: 0.7s; }
+    .section-header:nth-of-type(3) { animation-delay: 1.1s; }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .page-wrapper { padding: 44px 16px 80px; }
+      .question-card { padding: 22px 20px; }
+      .hero-title { font-size: 2.6rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+<canvas id="petal-canvas"></canvas>
+
+<div class="page-wrapper">
+
+  <!-- Hero -->
+  <header class="hero">
+    <p class="hero-eyebrow">Something I made, just for you</p>
+    <h1 class="hero-title">For My<br /><em>Pretty Girl</em></h1>
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-icon">✦</span>
+      <div class="divider-line"></div>
+    </div>
+    <p class="hero-intro">
+      I wanted to build something for you that wasn't just a text message.
+      I'm curious about your side of things — so take your time, be honest,
+      and know that every answer matters to me.
+    </p>
+  </header>
+
+  <!-- Form -->
+  <form id="quiz-form" novalidate>
+
+    <!-- Section 1 -->
+    <div class="section-header">
+      <span class="section-number">01</span>
+      <div class="section-info">
+        <h2>The Wins</h2>
+        <p>What you actually like about us</p>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q1">
+        What's one thing about our dynamic that surprised you (in a good way) compared to what you expected at the start?
+      </label>
+      <textarea id="q1" name="q1" placeholder="Take your time with this one…" rows="3"></textarea>
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q2">
+        What is your favourite way that we communicate right now — is it the late-night deep dives, the random check-ins, or just knowing the other person is there?
+      </label>
+      <input type="text" id="q2" name="q2" placeholder="Be specific if you can…" />
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q3">
+        Is there a specific small habit I have that you've noticed and actually quite like?
+      </label>
+      <input type="text" id="q3" name="q3" placeholder="Even the tiny things count…" />
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q4">
+        When you think about us, what's the one word that comes to mind that makes you feel the most secure?
+      </label>
+      <input type="text" id="q4" name="q4" placeholder="Just one word…" />
+    </div>
+
+    <!-- Section 2 -->
+    <div class="section-header">
+      <span class="section-number">02</span>
+      <div class="section-info">
+        <h2>The Bucket List</h2>
+        <p>Where we're headed together</p>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q5">
+        If I told you to clear your schedule for a mystery date next weekend, what's the one activity you'd secretly be hoping we're doing?
+      </label>
+      <input type="text" id="q5" name="q5" placeholder="Dream freely here…" />
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q6">
+        What is a "first" you're most excited for us to experience together — first road trip, first time cooking a complex meal, first big celebration?
+      </label>
+      <textarea id="q6" name="q6" placeholder="Paint the picture for me…" rows="3"></textarea>
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q7">
+        In a year's time, when we look back at the "early days," what's one tradition or habit you hope we've started by then?
+      </label>
+      <textarea id="q7" name="q7" placeholder="Something that's ours…" rows="3"></textarea>
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q8">
+        If we could go on a date themed after one of your favourite shows or movies, which world are we stepping into?
+      </label>
+      <input type="text" id="q8" name="q8" placeholder="Tell me the vibe too…" />
+    </div>
+
+    <!-- Section 3 -->
+    <div class="section-header">
+      <span class="section-number">03</span>
+      <div class="section-info">
+        <h2>Your World</h2>
+        <p>How I can show up better for you</p>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q9">
+        What's one way I can better support your Master's student grind that I'm not already doing?
+      </label>
+      <textarea id="q9" name="q9" placeholder="Be honest — I want to get this right…" rows="3"></textarea>
+    </div>
+
+    <div class="question-card">
+      <label class="question-label" for="q10">
+        What is a small, everyday win you've had lately that you haven't shared yet because it felt too minor?
+      </label>
+      <textarea id="q10" name="q10" placeholder="Nothing is too small here…" rows="3"></textarea>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <p class="submit-note">Your answers go straight to Uthando — no one else sees this.</p>
+      <button type="submit" class="submit-btn" id="submit-btn">
+        <span class="btn-icon">✦</span>
+        Send to Uthando
+        <span class="btn-icon">✦</span>
+      </button>
+      <p class="error-msg" id="error-msg">Something went wrong — please try again, or screenshot your answers and send them to me directly 🌸</p>
+    </div>
+
+  </form>
+
+  <!-- Success -->
+  <div class="success-screen" id="success-screen">
+    <span class="success-icon">🌸</span>
+    <h2 class="success-title">He has your answers.</h2>
+    <p class="success-msg">
+      Thank you for taking the time with this. Every word you wrote matters more than you know.
+    </p>
+  </div>
+
+  <footer class="footer">
+    Made with intention, by Uthando — for you.
+  </footer>
+
+</div>
+
+<!-- Falling petals -->
+<script>
+  const canvas = document.getElementById('petal-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, petals = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function randomBetween(a, b) { return a + Math.random() * (b - a); }
+
+  const COLORS = ['#e8c4b8','#d4a9a0','#c97d6e','#f5d5cc','#edb8ac'];
+
+  function spawnPetal() {
+    return {
+      x:     randomBetween(0, W),
+      y:     randomBetween(-80, -10),
+      r:     randomBetween(3, 7),
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      vx:    randomBetween(-0.4, 0.4),
+      vy:    randomBetween(0.5, 1.4),
+      angle: randomBetween(0, Math.PI * 2),
+      spin:  randomBetween(-0.02, 0.02),
+      opacity: randomBetween(0.35, 0.75),
+    };
+  }
+
+  for (let i = 0; i < 28; i++) {
+    const p = spawnPetal();
+    p.y = randomBetween(0, H); // seed them across screen on load
+    petals.push(p);
+  }
+
+  function drawPetal(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.angle);
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, p.r, p.r * 1.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    petals.forEach(p => {
+      p.x    += p.vx;
+      p.y    += p.vy;
+      p.angle+= p.spin;
+      if (p.y > H + 20) { Object.assign(p, spawnPetal()); }
+      drawPetal(p);
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+</script>
+
+<!-- EmailJS -->
+<script>
+  // ─────────────────────────────────────────────────────────────
+  //  EMAILJS SETUP — fill in your credentials below
+  //  1. Sign up free at https://www.emailjs.com
+  //  2. Create a service (Gmail works great) → copy the Service ID
+  //  3. Create an email template → copy the Template ID
+  //     In your template use these variables:
+  //       {{q1}} {{q2}} {{q3}} {{q4}} {{q5}} {{q6}} {{q7}} {{q8}} {{q9}} {{q10}}
+  //  4. Copy your Public Key from Account > API Keys
+  // ─────────────────────────────────────────────────────────────
+  const EMAILJS_PUBLIC_KEY  = '0Eqc2azbHFjm6D8ni';    // ← replace
+  const EMAILJS_SERVICE_ID  = 'service_ggzu17f';    // ← replace
+  const EMAILJS_TEMPLATE_ID = 'template_4ek85w8';   // ← replace
+
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+  const form       = document.getElementById('quiz-form');
+  const btn        = document.getElementById('submit-btn');
+  const errorMsg   = document.getElementById('error-msg');
+  const successDiv = document.getElementById('success-screen');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const params = {};
+    for (let i = 1; i <= 10; i++) {
+      const el = document.getElementById('q' + i);
+      params['q' + i] = el.value.trim() || '(left blank)';
+    }
+
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
+      form.style.display = 'none';
+      successDiv.classList.add('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      console.error('EmailJS error:', err);
+      errorMsg.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<span class="btn-icon">✦</span> Send to Uthando <span class="btn-icon">✦</span>';
+    }
+  });
+</script>
+
+</body>
+</html>
